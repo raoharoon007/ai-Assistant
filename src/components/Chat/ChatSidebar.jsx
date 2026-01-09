@@ -8,26 +8,7 @@ import { HiMenu } from "react-icons/hi";
 import { HiX } from "react-icons/hi";
 
 
-const ChatSidebar = () => {
-  const [chats, setChats] = useState([
-    { id: "1", title: "Seeking Relief from", messages: [] },
-    { id: "2", title: "Guidance for Managing", messages: [] },
-    { id: "3", title: "Need Help Identifying a", messages: [] },
-    { id: "4", title: "Navigating Through", messages: [] },
-    { id: "5", title: "Rehabilitation Strategies", messages: [] },
-    { id: "6", title: "Worried About Seasonal", messages: [] },
-    { id: "7", title: "Finding Resources", messages: [] },
-    { id: "8", title: "Exploring Treatment", messages: [] },
-    { id: "9", title: "Understanding the", messages: [] },
-    { id: "10", title: "Discussing Ways to", messages: [] },
-    { id: "11", title: "Looking for Practical IBS", messages: [] },
-    { id: "12", title: "Inquiries About Managing", messages: [] },
-    { id: "13", title: "Information on Coping", messages: [] },
-    { id: "14", title: "Identifying and Treating", messages: [] },
-    { id: "15", title: "Seeking a Supportive", messages: [] },
-    { id: "16", title: "Chatting About", messages: [] }
-    
-  ]);
+const ChatSidebar = ({ chats, setChats }) => {
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);

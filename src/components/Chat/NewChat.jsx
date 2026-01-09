@@ -5,6 +5,7 @@ import Reviewbot from '../../assets/images/Reviewbot.webp';
 import Botvideo from '../../assets/videos/Botvideo.mp4';
 import ChatInput from "./ChatInput";
 import AuthOverlay from "../Authoverlay/AuthOverlay";
+import { useOutletContext, useNavigate } from "react-router-dom";
 
 const NewChat = () => {
     const [isRecording, setIsRecording] = useState(false);
@@ -15,6 +16,8 @@ const NewChat = () => {
     const messagesEndRef = useRef(null);
     const [showOverlay, setShowOverlay] = useState(false);
     const typingIntervalRef = useRef(null);
+    const { setChats } = useOutletContext();
+    const navigate = useNavigate();
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,10 +75,10 @@ const NewChat = () => {
         }, 40);
     };
 
-    
+
     const handleStopChat = () => {
         if (typingIntervalRef.current) {
-            clearInterval(typingIntervalRef.current); 
+            clearInterval(typingIntervalRef.current);
             typingIntervalRef.current = null;
         }
         setMessages((prev) => {
@@ -89,33 +92,26 @@ const NewChat = () => {
         });
 
         setDisplayedText("");
-        setBotStatus("idle"); 
+        setBotStatus("idle");
     };
-
 
     const handleSendMessage = (text, attachedFiles = []) => {
         if (!text.trim() && attachedFiles.length === 0) return;
-        setIsRecording(false);
-        setIsTranscribing(false);
-        const userMsg = {
-            role: "user",
-            text: text,
-            files: attachedFiles
-        };
 
-        setMessages((prev) => [...prev, userMsg]);
-        setBotStatus("reviewing");
+        const newId = Date.now().toString();
+        const userMsg = { role: "user", text, files: attachedFiles };
 
-        setTimeout(() => {
-            setBotStatus("replying");
-            const botFullReply = "I have received your message and analyzed the details. How else can I assist you today?";
+        setChats((prev) => [
+            {
+                id: newId,
+                title: text.substring(0, 25) + (text.length > 25 ? "..." : ""),
+                messages: [userMsg]
+            },
+            ...prev
+        ]);
 
-            setMessages((prev) => [...prev, { role: "assistant", text: "", isTyping: true }]);
-
-            startTyping(botFullReply);
-        }, 2000);
+        navigate(`/chat/${newId}`, { state: { triggerBot: true }, replace: true });
     };
-
     return (
         <div className="relative flex flex-col w-full h-full bg-white overflow-x-hidden sm:px-4 px-1">
             <AuthOverlay
@@ -220,7 +216,7 @@ const NewChat = () => {
                         <ChatInput
                             onRecordingChange={handleRecordingChange}
                             onSend={handleSendMessage}
-                            onStop={handleStopChat} 
+                            onStop={handleStopChat}
                             disabled={botStatus !== "idle"}
                             isTranscribing={isTranscribing}
                         />
