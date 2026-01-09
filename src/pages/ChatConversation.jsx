@@ -12,7 +12,6 @@ const ChatConversation = () => {
     const { chatId } = useParams();
     const { chats, setChats } = useOutletContext();
     const { state } = useLocation();
-    const botTriggeredRef = useRef(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
     const [botStatus, setBotStatus] = useState("idle");
