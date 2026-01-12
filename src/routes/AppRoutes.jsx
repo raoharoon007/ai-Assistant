@@ -12,6 +12,7 @@ import Chat from "../pages/Chat";
 import ChatConversation from "../pages/ChatConversation";
 import SettingLayout from "../components/layouts/SettingLayout";
 import Setting from "../pages/Setting";
+import NotFound from "../pages/NotFound";
 
 const AppRoutes = () => {
   return (
@@ -34,6 +35,7 @@ const AppRoutes = () => {
        <Route element={<SettingLayout />}>
         <Route path="/setting" element={<Setting/>}/>
       </Route>
+      <Route path="*" element={<NotFound/>} />
     </Routes>
     </BrowserRouter>
   );
