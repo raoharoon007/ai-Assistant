@@ -1,17 +1,62 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import EyeCloseIcon from "../../assets/icons/ri_eye-close-line.svg?react";
 import EyeShowIcon from "../../assets/icons/ri_eye-show-line.svg?react";
-import { useState } from "react";
+
+// 1. Validation Schema (Real-time checks)
+const schema = yup.object({
+ fullName: yup
+    .string()
+    .trim() // ❌ removes starting & ending spaces
+    .required('Full name is required')
+    .matches(/^[A-Za-z]+( [A-Za-z]+)*$/, 'Only alphabets allowed and spaces must be between words'),
+  email: yup
+    .string()
+    .required('Email is required')
+    .matches(
+      /^(?!.*\.\.)(?!\.)(?!.*\.$)([a-zA-Z0-9._%+-]*[a-zA-Z0-9%+-])@(?!(?:-))[A-Za-z0-9-]+(?<!-)(\.[A-Za-z]{2,})+$/,
+      'Enter a valid email address'
+    ),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Min 6 characters")
+    .matches(/^(?=.*[a-zA-Z])(?=.*[0-9])/, "Must contain letters and numbers"),
+  confirmPassword: yup
+    .string()
+    .required("Please confirm your password")
+    .oneOf([yup.ref("password"), null], "Passwords must match"), // Match check
+}).required();
 
 const SignupForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
 
+  // 2. Hook Form initialization with Real-time mode
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  });
+
+  // 3. Submit handler
+  const onSubmit = (data) => {
+    console.log("Signup Data:", data);
+    navigate("/verifyotp", {
+      state: { from: "signup" },
+    });
+  };
+
   return (
-    // Using max-w-[460px] and same padding/gap as LoginForm
     <div className="bg-white flex flex-col w-full max-w-115 rounded-3xl justify-center items-center border border-bordercolor p-6 gap-3 2xl:gap-6 shadow-[0_4px_40px_0_rgba(235,235,235,0.8)] mx-4">
-      
+
       {/* Header Section */}
       <div className="flex flex-col justify-center items-center gap-2 2xl:gap-3">
         <h1 className="text-center font-semibold text-2xl sm:text-[28px] text-primarytext [text-box-trim:trim-both] [text-box-edge:cap_alphabetic]">
@@ -22,82 +67,82 @@ const SignupForm = () => {
         </p>
       </div>
 
-      {/* Form Section - Same spacing as Login */}
-      <form className="w-full flex flex-col gap-2 2xl:gap-4">
+      {/* Form Section */}
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col gap-2 2xl:gap-4">
+
         {/* Full Name */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-normal text-primarytext ml-1">
-            Full Name
-          </label>
+          <label className="text-sm font-normal text-primarytext ml-1">Full Name</label>
           <input
+            {...register("fullName")}
             type="text"
             placeholder="Enter your Full Name"
-            className="w-full rounded-xl border font-normal text-primarytext placeholder:text-mutedtext focus:placeholder-transparent outline-none border-bordercolor px-4 py-3 text-sm focus:outline-none hover:border-primary focus:border-primary transition-all"
+            className={`w-full rounded-xl border font-normal text-primarytext placeholder:text-mutedtext focus:placeholder-transparent outline-none px-4 py-3 text-sm transition-all ${errors.fullName ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
+              }`}
           />
+          {errors.fullName && <span className="text-warning text-xs ml-1">{errors.fullName.message}</span>}
         </div>
 
         {/* Email */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-normal text-primarytext ml-1">
-            Email
-          </label>
+          <label className="text-sm font-normal text-primarytext ml-1">Email</label>
           <input
+            {...register("email")}
             type="email"
             placeholder="Enter Your Email"
-            className="w-full rounded-xl border font-normal text-primarytext placeholder:text-mutedtext focus:placeholder-transparent outline-none border-bordercolor px-4 py-3 text-sm focus:outline-none hover:border-primary focus:border-primary transition-all"
+            className={`w-full rounded-xl border font-normal text-primarytext placeholder:text-mutedtext focus:placeholder-transparent outline-none px-4 py-3 text-sm transition-all ${errors.email ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
+              }`}
           />
+          {errors.email && <span className="text-warning text-xs ml-1">{errors.email.message}</span>}
         </div>
 
         {/* Password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-normal text-primarytext ml-1">
-            Password
-          </label>
+          <label className="text-sm font-normal text-primarytext ml-1">Password</label>
           <div className="relative">
             <input
+              {...register("password")}
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className="w-full rounded-xl font-normal text-primarytext placeholder:text-mutedtext border focus:placeholder-transparent outline-none border-bordercolor px-4 py-3 pr-12 text-sm focus:outline-none hover:border-primary focus:border-primary transition-all"
+              className={`w-full rounded-xl font-normal text-primarytext placeholder:text-mutedtext border focus:placeholder-transparent outline-none px-4 py-3 pr-12 text-sm transition-all ${errors.password ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
+                }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 inset-y-0 flex items-center cursor-pointer opacity-70 hover:opacity-100 transition"
             >
-              {showPassword ? <EyeShowIcon />  : <EyeCloseIcon />}
+              {showPassword ? <EyeShowIcon /> : <EyeCloseIcon />}
             </button>
           </div>
+          {errors.password && <span className="text-warning text-xs ml-1">{errors.password.message}</span>}
         </div>
 
         {/* Confirm Password */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-normal text-primarytext ml-1">
-            Confirm Password
-          </label>
+          <label className="text-sm font-normal text-primarytext ml-1">Confirm Password</label>
           <div className="relative">
             <input
+              {...register("confirmPassword")}
               type={showConfirm ? "text" : "password"}
               placeholder="Renter Your Password"
-              className="w-full rounded-xl font-normal text-primarytext placeholder:text-mutedtext border focus:placeholder-transparent outline-none border-bordercolor px-4 py-3 pr-12 text-sm focus:outline-none hover:border-primary focus:border-primary transition-all"
+              className={`w-full rounded-xl font-normal text-primarytext placeholder:text-mutedtext border focus:placeholder-transparent outline-none px-4 py-3 pr-12 text-sm transition-all ${errors.confirmPassword ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
+                }`}
             />
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
               className="absolute right-4 inset-y-0 flex items-center cursor-pointer opacity-70 hover:opacity-100 transition"
             >
-              {showConfirm ? <EyeShowIcon />  : <EyeCloseIcon />}
+              {showConfirm ? <EyeShowIcon /> : <EyeCloseIcon />}
             </button>
           </div>
+          {errors.confirmPassword && <span className="text-warning text-xs ml-1">{errors.confirmPassword.message}</span>}
         </div>
 
-        {/* Signup Button - Adjusted margin to match Login layout */}
+        {/* Signup Button */}
         <button
-          type="button"
-          onClick={() =>
-            navigate("/verifyotp", {
-              state: { from: "signup" },
-            })
-          }
+          type="submit"
           className="w-full text-center bg-primary hover:bg-hoverbtn text-white rounded-full py-3.5 font-semibold shadow-lg shadow-primary/10 cursor-pointer transition mt-2 active:scale-[0.98]"
         >
           Sign Up
@@ -107,10 +152,7 @@ const SignupForm = () => {
       {/* Footer Link */}
       <p className="text-center font-normal text-sm text-secondarytext">
         Already have an account?
-        <Link
-          to="/login"
-          className="text-primary font-normal text-sm ml-1 "
-        >
+        <Link to="/login" className="text-primary font-normal text-sm ml-1">
           Login
         </Link>
       </p>

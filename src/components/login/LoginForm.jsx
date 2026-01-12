@@ -1,15 +1,52 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import EyeCloseIcon from "../../assets/icons/ri_eye-close-line.svg?react";
 import EyeShowIcon from "../../assets/icons/ri_eye-show-line.svg?react";
 
+// 1. Yup Validation Schema (Alphanumeric + 6 chars)
+const schema = yup.object({
+  email: yup
+    .string()
+    .required('Email is required')
+    .matches(
+      /^(?!.*\.\.)(?!\.)(?!.*\.$)([a-zA-Z0-9._%+-]*[a-zA-Z0-9%+-])@(?!(?:-))[A-Za-z0-9-]+(?<!-)(\.[A-Za-z]{2,})+$/,
+      'Enter a valid email address'
+    ),
+  password: yup
+    .string()
+    .required("Password is required")
+    .min(6, "Password must be at least 6 characters")
+    .matches(
+      /^(?=.*[a-zA-Z])(?=.*[0-9])/,
+      "Password must be alphanumeric (letters & numbers)"
+    ),
+  rememberMe: yup.boolean(),
+}).required();
+
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  });
+
+  const onSubmit = (data) => {
+    console.log("Form Data:", data);
+    navigate("/chat");
+  };
 
   return (
     <div className="bg-white flex flex-col w-full max-w-115 rounded-3xl justify-center items-center border border-bordercolor p-6 gap-3 2xl:gap-6 shadow-[0_4px_40px_0_rgba(235,235,235,0.8)] mx-4">
-      
-      {/* Header Section */}
+
       <div className="flex flex-col justify-center items-center 2xl:gap-5 gap-3">
         <h1 className="text-center font-semibold text-2xl md:text-[28px] text-primarytext">
           Welcome Back
@@ -19,76 +56,80 @@ const LoginForm = () => {
         </p>
       </div>
 
-      {/* Form Section */}
-      <form className="w-full flex flex-col 2xl:gap-4 gap-2">
+      <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col 2xl:gap-4 gap-2">
+
         {/* Email Field */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-normal text-primarytext ml-1">
-            Email
-          </label>
+          <label className="text-sm font-normal text-primarytext ml-1">Email</label>
           <input
+            {...register("email")}
             type="email"
             placeholder="Enter Your Email"
-            className="w-full rounded-xl border border-bordercolor px-4 py-3 text-sm focus:outline-none hover:border-primary focus:placeholder-transparent outline-none focus:border-primary placeholder:text-mutedtext "
+            className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.email
+                ? "border-red-500 focus:border-red-500"
+                : "border-bordercolor focus:border-primary hover:border-primary"
+              }`}
           />
+          {errors.email && (
+            <span className="text-warning text-[11px] font-medium ml-1 transition-opacity duration-300">
+              {errors.email.message}
+            </span>
+          )}
         </div>
 
         {/* Password Field */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-normal text-primarytext ml-1">
-            Password
-          </label>
+          <label className="text-sm font-normal text-primarytext ml-1">Password</label>
           <div className="relative">
             <input
+              {...register("password")}
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className="w-full rounded-xl border border-bordercolor px-4 py-3 pr-12 text-sm focus:outline-none hover:border-primary focus:placeholder-transparent outline-none focus:border-primary placeholder:text-mutedtext"
+              className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.password
+                  ? "border-warning focus:border-warning"
+                  : "border-bordercolor focus:border-primary hover:border-primary"
+                }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 inset-y-0 flex items-center cursor-pointer "
+              className="absolute right-4 inset-y-0 flex items-center cursor-pointer"
             >
-              {showPassword ? <EyeShowIcon />  : <EyeCloseIcon />}
+              {showPassword ? <EyeShowIcon /> : <EyeCloseIcon />}
             </button>
           </div>
+          {errors.password && (
+            <span className="text-warning text-[11px] font-medium ml-1">
+              {errors.password.message}
+            </span>
+          )}
         </div>
 
-        {/* Remember & Forgot */}
         <div className="flex items-center justify-between text-xs md:text-sm mt-1">
           <label className="flex items-center gap-2 text-secondarytext cursor-pointer group">
             <input
+              {...register("rememberMe")}
               type="checkbox"
               className="accent-primary size-4 cursor-pointer appearance-none border-[1.5px] border-primary rounded-xs checked:appearance-auto"
-            /> 
-            <span className="text-sm font-normal text-secondarytext ">Remember me</span>
+            />
+            <span className="text-sm font-normal text-secondarytext">Remember me</span>
           </label>
-          <Link
-            to="/forgotpassword"
-            className="text-primary font-normal text-sm "
-          >
+          <Link to="/forgotpassword" className="text-primary font-normal text-sm">
             Forgot Password?
           </Link>
         </div>
 
-        {/* Login Button */}
-        <Link to="/chat" className="w-full mt-2">
-          <button
-            type="button"
-            className="w-full bg-primary hover:bg-hoverbtn text-white rounded-full py-2.5 text-base font-semibold  cursor-pointer "
-          >
-            Login
-          </button>
-        </Link>
+        <button
+          type="submit"
+          className="w-full bg-primary hover:bg-hoverbtn text-white rounded-full py-2.5 text-base font-semibold cursor-pointer mt-2 transition-colors"
+        >
+          Login
+        </button>
       </form>
 
-      {/* Footer Link */}
       <p className="text-center font-normal text-sm text-secondarytext">
         Don’t have an account?
-        <Link
-          to="/signup"
-          className="text-primary font-normal ml-1 "
-        >
+        <Link to="/signup" className="text-primary font-normal ml-1">
           Create One
         </Link>
       </p>
