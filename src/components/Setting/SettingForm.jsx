@@ -112,7 +112,7 @@ const SettingForm = () => {
                                     <SettingProfileIcon className="h-full w-full" />
                                 )}
                                 <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageChange} />
-                                <button onClick={() => fileInputRef.current.click()} className="absolute bottom-10 -right-1 cursor-pointer hover:scale-110">
+                                <button onClick={() => fileInputRef.current.click()} className="absolute bottom-13 -right-1 cursor-pointer">
                                     <EditIcon />
                                 </button>
                             </div>
