@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import EyeCloseIcon from "../../assets/icons/ri_eye-close-line.svg?react";
 import EyeShowIcon from "../../assets/icons/ri_eye-show-line.svg?react";
+import api from "../../api/axiosInstance";
 
-// 1. Yup Validation Schema (Alphanumeric + 6 chars)
 const schema = yup.object({
   email: yup
     .string()
@@ -19,34 +19,69 @@ const schema = yup.object({
     .string()
     .required("Password is required")
     .min(6, "Password must be at least 6 characters")
-    .matches(
-      /^(?=.*[a-zA-Z])(?=.*[0-9])/,
-      "Password must be alphanumeric (letters & numbers)"
-    ),
+    .matches(/^(?=.*[a-zA-Z])(?=.*[0-9])/, "Password must be alphanumeric"),
   rememberMe: yup.boolean(),
 }).required();
 
 const LoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [apiError, setApiError] = useState("");
   const navigate = useNavigate();
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    setValue,
+    formState: { errors, isSubmitting }, // isSubmitting for loading
   } = useForm({
     resolver: yupResolver(schema),
     mode: "onChange",
   });
 
-  const onSubmit = (data) => {
-    console.log("Form Data:", data);
-    navigate("/chat");
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+
+    if (savedEmail) {
+      setValue("email", savedEmail);
+      setValue("rememberMe", true);
+    }
+    if (savedPassword) {
+      setValue("password", savedPassword);
+    }
+  }, [setValue]);
+
+  const onSubmit = async (data) => {
+    setApiError("");
+    try {
+      const response = await api.post("/auth/login", {
+        email: data.email,
+        password: data.password,
+      });
+
+      const token = response.data.access_token || response.data.token;
+
+      if (token) {
+        localStorage.setItem("token", token);
+
+        if (data.rememberMe) {
+          localStorage.setItem("rememberedEmail", data.email);
+          localStorage.setItem("rememberedPassword", data.password);
+        } else {
+          localStorage.removeItem("rememberedEmail");
+          localStorage.removeItem("rememberedPassword");
+        }
+
+        navigate("/chat");
+      }
+    } catch (error) {
+      const errorMsg = error.response?.data?.detail || "Invalid email or password";
+      setApiError(errorMsg);
+    }
   };
 
   return (
     <div className="bg-white flex flex-col w-full max-w-115 rounded-3xl justify-center items-center border border-bordercolor p-6 gap-3 2xl:gap-6 shadow-[0_4px_40px_0_rgba(235,235,235,0.8)] mx-4">
-
       <div className="flex flex-col justify-center items-center 2xl:gap-5 gap-3">
         <h1 className="text-center font-semibold text-2xl md:text-[28px] text-primarytext">
           Welcome Back
@@ -55,9 +90,7 @@ const LoginForm = () => {
           Continue securely to receive general health guidance and view your past interactions.
         </p>
       </div>
-
       <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col 2xl:gap-4 gap-2">
-
         {/* Email Field */}
         <div className="flex flex-col gap-1.5">
           <label className="text-sm font-normal text-primarytext ml-1">Email</label>
@@ -65,16 +98,10 @@ const LoginForm = () => {
             {...register("email")}
             type="email"
             placeholder="Enter Your Email"
-            className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.email
-                ? "border-red-500 focus:border-red-500"
-                : "border-bordercolor focus:border-primary hover:border-primary"
+            className={`w-full rounded-xl border px-4 py-3 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.email || apiError ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
               }`}
           />
-          {errors.email && (
-            <span className="text-warning text-[11px] font-medium ml-1 transition-opacity duration-300">
-              {errors.email.message}
-            </span>
-          )}
+          {errors.email && <span className="text-warning text-[11px] font-medium ml-1 italic">{errors.email.message}</span>}
         </div>
 
         {/* Password Field */}
@@ -85,53 +112,45 @@ const LoginForm = () => {
               {...register("password")}
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.password
-                  ? "border-warning focus:border-warning"
-                  : "border-bordercolor focus:border-primary hover:border-primary"
+              className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.password || apiError ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
                 }`}
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 inset-y-0 flex items-center cursor-pointer"
-            >
+            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 inset-y-0 flex items-center cursor-pointer opacity-70 hover:opacity-100 transition">
               {showPassword ? <EyeShowIcon /> : <EyeCloseIcon />}
             </button>
           </div>
-          {errors.password && (
-            <span className="text-warning text-[11px] font-medium ml-1">
-              {errors.password.message}
-            </span>
-          )}
+          {errors.password && <span className="text-warning text-[11px] font-medium ml-1 italic">{errors.password.message}</span>}
         </div>
 
         <div className="flex items-center justify-between text-xs md:text-sm mt-1">
-          <label className="flex items-center gap-2 text-secondarytext cursor-pointer group">
+          <label className="flex items-center gap-1 xs:gap-2 text-secondarytext cursor-pointer group">
             <input
               {...register("rememberMe")}
               type="checkbox"
-              className="accent-primary size-4 cursor-pointer appearance-none border-[1.5px] border-primary rounded-xs checked:appearance-auto"
+              className="accent-primary size-3 xs:size-4 cursor-pointer"
             />
-            <span className="text-sm font-normal text-secondarytext">Remember me</span>
+            <span className="text-xs xs:text-sm font-normal text-secondarytext">Remember me</span>
           </label>
-          <Link to="/forgotpassword" className="text-primary font-normal text-sm">
-            Forgot Password?
-          </Link>
+          <Link to="/forgotpassword" className="text-primary font-normal tex-xs xs:text-sm ">Forgot Password?</Link>
         </div>
 
         <button
           type="submit"
-          className="w-full bg-primary hover:bg-hoverbtn text-white rounded-full py-2.5 text-base font-semibold cursor-pointer mt-2 transition-colors"
+          disabled={isSubmitting}
+          className="w-full bg-primary hover:bg-hoverbtn text-white rounded-full py-3 text-base font-semibold cursor-pointer mt-2 transition active:scale-[0.98] disabled:opacity-70"
         >
-          Login
+          {isSubmitting ? "Logging in..." : "Login"}
         </button>
       </form>
 
-      <p className="text-center font-normal text-sm text-secondarytext">
-        Don’t have an account?
-        <Link to="/signup" className="text-primary font-normal ml-1">
-          Create One
-        </Link>
+      {apiError && (
+        <div className="w-full bg-warning/10 border border-warning/20 text-warning text-xs py-2.5 px-4 rounded-xl text-center font-medium italic">
+          {apiError}
+        </div>
+      )}
+
+      <p className="text-center font-normal text-xs xs:text-sm text-secondarytext">
+        Don’t have an account? <Link to="/signup" className="text-primary font-normal ml-1 cursor-pointer">Create One</Link>
       </p>
     </div>
   );

@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import OtpInput from "react-otp-input";
 import CheckCircle from "../../assets/icons/checkmark-circle-01.svg?react";
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import api from "../../api/axiosInstance";
 
-// 1. Yup Validation Schema
 const schema = yup.object({
   otp: yup
     .string()
@@ -17,41 +17,88 @@ const schema = yup.object({
 
 const VerifyotpForm = () => {
   const [showOverlay, setShowOverlay] = useState(false);
-
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [resendMessage, setResendMessage] = useState(""); 
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from;
+  const email = location.state?.email;
 
-  // 2. Hook Form setup
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm({
+  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: { otp: "" },
     mode: "onChange",
   });
 
-  // 3. Submit handler
-  const onVerify = (data) => {
-    setShowOverlay(true);
-    setTimeout(() => {
-      if (from === "forgotpassword") {
-        navigate("/setnewpassword");
-      } else if (from === "signup") {
-        navigate("/profilesetup");
-      } else {
-        navigate("/verifyotpform");
-      }
-    }, 1500);
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer((prev) => prev - 1), 1000);
+    } else {
+      setCanResend(true);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  const handleResend = async () => {
+    if (!canResend) return;
+    setApiError("");
+    setResendMessage("");
+
+    try {
+      const endpoint = from === "signup" ? "/auth/sign-up" : "/auth/forgot-password";
+      await api.post(endpoint, { email: email });
+
+      setResendMessage("OTP resent successfully!"); 
+      setTimer(60);
+      setCanResend(false);
+
+      setTimeout(() => setResendMessage(""), 3000);
+    } catch (error) {
+      setApiError(error.response?.data?.detail || "Failed to resend OTP");
+    }
+  };
+
+  const formatTime = (time) => {
+    const seconds = time % 60;
+    return `00:${seconds < 10 ? `0${seconds}` : seconds}`;
+  };
+
+  const onVerify = async (data) => {
+    setApiError("");
+    try {
+      let endpoint = from === "forgotpassword"
+        ? "/auth/verify-otp-for-forget-password"
+        : "/auth/verify-otp-for-email-for-signup";
+
+      await api.post(endpoint, {
+        email: email,
+        otp: data.otp,
+      });
+
+      setShowOverlay(true);
+
+      setTimeout(() => {
+        if (from === "forgotpassword") {
+          navigate("/setnewpassword", {
+            state: { email: email, otp: data.otp } // OTP pass karna zaroori hai
+          });
+        } else {
+          navigate("/profilesetup");
+        }
+      }, 1500);
+    } catch (error) {
+      setApiError(error.response?.data?.detail || "Invalid OTP. Please try again.");
+    }
   };
 
   return (
     <>
       <div className="bg-white flex flex-col w-full max-w-115.5 rounded-3xl justify-center items-center border border-bordercolor p-6 gap-6 shadow-[0_4px_40px_0_rgba(235,235,235,0.8)] mx-4">
 
-        {/* Header Section */}
         <div className="flex flex-col justify-center items-center gap-3">
           <h1 className="text-center font-semibold text-2xl sm:text-[28px] text-primarytext">
             Verify OTP
@@ -61,10 +108,8 @@ const VerifyotpForm = () => {
           </p>
         </div>
 
-        {/* Form Section - handleSubmit integrated */}
         <form onSubmit={handleSubmit(onVerify)} className="w-full flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            {/* Controller is needed for 3rd party components like OtpInput */}
             <Controller
               name="otp"
               control={control}
@@ -79,20 +124,15 @@ const VerifyotpForm = () => {
                   renderInput={(inputProps) => (
                     <input
                       {...inputProps}
-                      type="text"
-                      inputMode="numeric"
-                      className={`w-12! h-12 md:w-14! md:h-14 text-center text-primarytext text-xl font-semibold rounded-xl border transition-all focus:outline-none ${errors.otp
-                          ? "border-warning"
-                          : "border-bordercolor focus:border-primary hover:border-primary"
+                      className={`w-12! h-12 md:w-14! md:h-14 text-center text-primarytext text-xl font-semibold rounded-xl border transition-all focus:outline-none ${errors.otp || apiError ? "border-warning" : "border-bordercolor focus:border-primary hover:border-primary"
                         }`}
                     />
                   )}
                 />
               )}
             />
-            {/* Error Message Display */}
             {errors.otp && (
-              <span className="text-warning text-xs text-center font-medium">
+              <span className="text-warning text-xs text-center font-medium italic">
                 {errors.otp.message}
               </span>
             )}
@@ -100,22 +140,35 @@ const VerifyotpForm = () => {
 
           <button
             type="submit"
-            className="w-full text-center bg-primary hover:bg-hoverbtn text-white rounded-full py-3.5 font-semibold shadow-lg shadow-primary/10 cursor-pointer transition active:scale-[0.98]"
+            disabled={isSubmitting}
+            className="w-full text-center bg-primary hover:bg-hoverbtn text-white rounded-full py-3.5 font-semibold shadow-lg shadow-primary/10 cursor-pointer transition active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            Verify OTP
+            {isSubmitting ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
 
-        <p className="text-center font-normal text-sm text-secondarytext">
-          00:52
-          <span className="text-primary ml-2 cursor-pointer font-medium hover:underline">Resend</span>
+        {(apiError || resendMessage) && (
+          <div className={`w-full text-xs py-2.5 px-4 rounded-xl text-center font-medium italic ${apiError ? "bg-warning/10 text-warning border border-warning/20" : "bg-primary/10 text-primary border border-primary/20"
+            }`}>
+            {apiError || resendMessage}
+          </div>
+        )}
+
+        <p className="text-center font-normal text-sm text-secondarytext mt-4">
+          {formatTime(timer)}
+          <span
+            onClick={handleResend}
+            className={`ml-2 font-medium transition ${canResend ? "text-primary cursor-pointer " : "text-mutedtext cursor-not-allowed opacity-50"
+              }`}
+          >
+            Resend
+          </span>
         </p>
       </div>
 
-      {/* Verification Success Overlay */}
       {showOverlay && (
-        <div className="fixed inset-0 z-50 flex items-center rounded-3xl justify-center bg-black/5 backdrop-blur-sm transition-all">
-          <div className="bg-white rounded-xl px-8 md:px-12 py-10 flex flex-col items-center gap-4 mx-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/5 backdrop-blur-sm transition-all">
+          <div className="bg-white rounded-xl px-8 md:px-12 py-10 flex flex-col items-center gap-4 mx-4 shadow-2xl animate-in zoom-in-95 duration-300">
             <CheckCircle className="w-16 h-16" />
             <p className="text-xl md:text-[22px] font-semibold text-primarytext text-center">
               Verification Completed
