@@ -60,12 +60,7 @@ const LandingPage = () => {
         </div>
         <div className="pb-1.5 xl:pb-2 2xl:pb-3 px-5 max-w-130 xl:max-w-139.75 2xl:max-w-170 mx-auto">
           <p className="text-sm 2xl:text-lg font-semibold text-secondarytext text-center">
-            Medical Disclaimer:
-            <span className="font-normal text-mutedtext pl-px">
-              This AI assistant is for informational purposes only and does not
-              provide medical diagnosis or prescription. In case of emergency,
-              call your local emergency number immediately.
-            </span>
+            Medical Disclaimer: <span className="font-normal text-mutedtext pl-px"> This AI assistant is for informational purposes only and does notprovide medical diagnosis or prescription. In case of emergency,call your local emergency number immediately.</span>
           </p>
         </div>
       </div>

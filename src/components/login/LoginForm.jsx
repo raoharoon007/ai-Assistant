@@ -84,7 +84,7 @@ const LoginForm = () => {
             <input
               {...register("password")}
               type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
+              placeholder="Enter Your Password"
               className={`w-full rounded-xl border px-4 py-3 pr-12 text-sm focus:outline-none outline-none transition-all placeholder:text-mutedtext ${errors.password
                   ? "border-warning focus:border-warning"
                   : "border-bordercolor focus:border-primary hover:border-primary"

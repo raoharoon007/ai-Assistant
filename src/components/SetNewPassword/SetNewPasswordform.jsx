@@ -59,7 +59,7 @@ const SetNewPasswordform = () => {
                         <input
                             {...register("password")}
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter your password"
+                            placeholder="Enter Your Password"
                             className={`w-full rounded-xl font-normal text-primarytext placeholder:text-mutedtext border focus:placeholder-transparent outline-none px-4 py-3 pr-12 text-sm transition-all ${errors.password
                                     ? "border-warning focus:border-warning"
                                     : "border-bordercolor focus:border-primary hover:border-primary"
