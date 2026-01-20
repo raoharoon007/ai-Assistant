@@ -6,7 +6,7 @@ const Setting = () => {
     return (
 
         <div className=" h-full w-full bg-bodybg ">
-            <div className='px-12.5 py-6'>
+            <div className='px-7.5 xs:px-9.5 sm:px-12.5 py-6'>
                 <div>
                     <Link to="/chat" className='flex gap-3'>
                         <Leftarrow />

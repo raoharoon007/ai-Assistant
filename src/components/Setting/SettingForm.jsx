@@ -117,8 +117,8 @@ const SettingForm = () => {
                                 </button>
                             </div>
                             <div className='flex flex-col ml-4'>
-                                <span className='text-lg font-normal text-primarytext'>Alex Costa</span>
-                                <span className='text-sm font-normal text-secondarytext'>abc123@gmail.com</span>
+                                <span className='text-sm xs:text-lg font-normal text-primarytext'>Alex Costa</span>
+                                <span className='text-xs xs:text-sm font-normal text-secondarytext'>abc123@gmail.com</span>
                             </div>
                         </div>
 
@@ -171,7 +171,7 @@ const SettingForm = () => {
                                 <input type="password" value="********" disabled className="w-full rounded-xl border border-bordercolor px-4 py-3 text-sm bg-gray-50 opacity-60 cursor-not-allowed" />
                             </div>
 
-                            <div className='flex justify-end'>
+                            <div className='flex justify-center md:justify-end'>
                                 <button type="button" onClick={() => setIsChangingPassword(true)} className="underline text-primary p-2 text-sm cursor-pointer">
                                     Change Password
                                 </button>
