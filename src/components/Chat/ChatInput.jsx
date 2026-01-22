@@ -59,7 +59,7 @@ const ChatInput = ({ onRecordingChange = () => { }, onSend = () => { }, onStop =
             textarea.style.height = "auto";
             const newHeight = Math.min(textarea.scrollHeight, 200);
             textarea.style.height = `${newHeight}px`;
-            setIsMultiline(newHeight > 45);
+            setIsMultiline(newHeight > 60);
         }
     };
 
@@ -136,7 +136,6 @@ const ChatInput = ({ onRecordingChange = () => { }, onSend = () => { }, onStop =
             {/* Main Input Container - Border radius and padding adjusted */}
            <div className={`relative flex flex-col flex-1 bg-white border-2 overflow-hidden transition-all duration-300 
                  ${disabled ? "bg-gray-50 border-gray-200" : "border-bordercolor focus-within:border-primary"}
-                  /* Dynamic Radius Logic */
                    ${(isMultiline || files.length > 0) ? "rounded-2xl" : "rounded-full"} 
                   `}>
 
